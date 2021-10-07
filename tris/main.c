@@ -105,7 +105,7 @@ void printVect(vec_t vect){
 ///////////////////////////////////////////////////////////////////////////
 
 void tri_bull_vect(vec_t * vect){
-    if(vect->nbele > 10000){return;}
+
 
     float tmp = 0;
     for( size_t i = vect->nbele - 1; i >= 1; i-- ){
@@ -122,7 +122,7 @@ void tri_bull_vect(vec_t * vect){
 ///////////////////////////////////////////////////////////////////////////
 
 void tri_selection_vect(vec_t * vect){
-    if(vect->nbele > 30000){return;}
+
 
     int n = vect->nbele;
     size_t min = 0;
@@ -144,7 +144,7 @@ void tri_selection_vect(vec_t * vect){
 ///////////////////////////////////////////////////////////////////////////
 
 void tri_insertion_vect(vec_t * vect){
-    if(vect->nbele > 20000){return;}
+
 
     int n = vect->nbele;
     size_t index = 0;
@@ -298,29 +298,30 @@ void tri_rapide_vect( vec_t * vect ){
 //////////////////////////////////////////////////////////////////////////
 
 
-void dubious_vect_benchmark( int argc, char const *argv[] ){
+void dubious_random_vect_benchmark(char const *fileName ){
 
-    if(argc > 1){
-        printf("%d\n", argc );
-        printf("%s\n",argv[1] );
-    }
-    else{
-        printf("ERROR - FICHIER MANQUANT\n");
-        return;
-    }
+
+
+    FILE *fp;
+
+    fp = fopen(fileName, "w");
+
+
     clock_t t0, t1, dt, t_null;
     vec_t vect;
     t0 = clock();
     t_null = t0 - t0;
     int nb_sample = 10;
-
-    for(unsigned long long n = 10; n < 1000000 /*10^6*/; n *= 2){
-        printf("%*lld:\t", 10,  n );
+    fprintf(fp,"x, tri à bulle, tri insertion, tri selection, tri fusion, tri tas, tri rapide\n");
+    for(unsigned long long n = 16; n < 1000000 /*10^6*/; n *= 2){
+        fprintf(fp,"%*lld,", 0, n );
+        printf("%lld\n", n );
 
 
         //
         dt = t_null;
-        for(int i = 0; i < nb_sample; i++){
+        for(int i = 0; i < nb_sample; i++ ){
+            if(n > 10000){break;}
             vect = creeretremplir(n);
             t0 = clock();
             tri_bull_vect(&vect);
@@ -328,11 +329,12 @@ void dubious_vect_benchmark( int argc, char const *argv[] ){
             dt += t1 - t0;
         }
         dt = dt/nb_sample;
-        printf("%*d,", 10,(int) dt );
+        fprintf(fp, "%*d,", 0, (int) dt );
 
         //
         dt = t_null;
-        for(int i = 0; i < nb_sample; i++){
+        for(int i = 0; i < nb_sample; i++ ){
+            if(n > 20000){break;}
             vect = creeretremplir(n);
             t0 = clock();
             tri_insertion_vect(&vect);
@@ -340,11 +342,12 @@ void dubious_vect_benchmark( int argc, char const *argv[] ){
             dt += t1 - t0;
         }
         dt = dt/nb_sample;
-        printf("%*d,", 10,(int) dt );
+        fprintf(fp, "%*d,", 0, (int) dt );
 
         //
         dt = t_null;
         for(int i = 0; i < nb_sample; i++){
+            if(n > 30000){break;}
             vect = creeretremplir(n);
             t0 = clock();
             tri_selection_vect(&vect);
@@ -352,7 +355,19 @@ void dubious_vect_benchmark( int argc, char const *argv[] ){
             dt += t1 - t0;
         }
         dt = dt/nb_sample;
-        printf("%*d,", 10,(int) dt );
+        fprintf(fp, "%*d,", 0, (int) dt );
+
+        //
+        dt = t_null;
+        for(int i = 0; i < nb_sample; i++){
+            vect = creeretremplir(n);
+            t0 = clock();
+            tri_fusion_vect(&vect);
+            t1 = clock();
+            dt += t1 - t0;
+        }
+        dt = dt/nb_sample;
+        fprintf(fp, "%*d,", 0, (int) dt );
 
         //
         dt = t_null;
@@ -364,7 +379,7 @@ void dubious_vect_benchmark( int argc, char const *argv[] ){
             dt += t1 - t0;
         }
         dt = dt/nb_sample;
-        printf("%*d,", 10,(int) dt );
+        fprintf(fp, "%*d,", 0, (int) dt );
 
         //
         dt = t_null;
@@ -376,19 +391,138 @@ void dubious_vect_benchmark( int argc, char const *argv[] ){
             dt += t1 - t0;
         }
         dt = dt/nb_sample;
-        printf("%*d,", 10,(int) dt );
+        fprintf(fp, "%*d,", 0, (int) dt );
 
 
 
         //
-        printf("\n");
+        fprintf(fp, "\n");
 
 
     }
+    printf("done\n");
+    fclose(fp);
+    return;
 
 
 }
 //////////////////////////////////////////////////////////////////////////
+
+void dubious_sorted_vect_benchmark(char const *fileName ){
+
+
+    FILE *fp;
+
+    fp = fopen(fileName, "w");
+
+
+    clock_t t0, t1, dt, t_null;
+    vec_t vect;
+    t0 = clock();
+    t_null = t0 - t0;
+    int nb_sample = 10;
+    fprintf(fp,"x, tri à bulle, tri insertion, tri selection, tri fusion, tri tas, tri rapide\n");
+    for(unsigned long long n = 16; n < 1000000 /*10^6*/; n *= 2){
+        fprintf(fp,"%*lld,", 0, n );
+        printf("%lld\n", n );
+
+
+        //
+        dt = t_null;
+        for(int i = 0; i < nb_sample; i++ ){
+            if(n > 10000){break;}
+            vect = creeretremplir(n);
+            tri_rapide_vect(&vect);
+            t0 = clock();
+            tri_bull_vect(&vect);
+            t1 = clock();
+            dt += t1 - t0;
+        }
+        dt = dt/nb_sample;
+        fprintf(fp, "%*d,", 0, (int) dt );
+
+        //
+        dt = t_null;
+        for(int i = 0; i < nb_sample; i++ ){
+            if(n > 20000){break;}
+            vect = creeretremplir(n);
+            tri_rapide_vect(&vect);
+            t0 = clock();
+            tri_insertion_vect(&vect);
+            t1 = clock();
+            dt += t1 - t0;
+        }
+        dt = dt/nb_sample;
+        fprintf(fp, "%*d,", 0, (int) dt );
+
+        //
+        dt = t_null;
+        for(int i = 0; i < nb_sample; i++){
+            if(n > 30000){break;}
+            vect = creeretremplir(n);
+            tri_rapide_vect(&vect);
+            t0 = clock();
+            tri_selection_vect(&vect);
+            t1 = clock();
+            dt += t1 - t0;
+        }
+        dt = dt/nb_sample;
+        fprintf(fp, "%*d,", 0, (int) dt );
+
+        //
+        dt = t_null;
+        for(int i = 0; i < nb_sample; i++){
+            vect = creeretremplir(n);
+            tri_rapide_vect(&vect);
+            t0 = clock();
+            tri_fusion_vect(&vect);
+            t1 = clock();
+            dt += t1 - t0;
+        }
+        dt = dt/nb_sample;
+        fprintf(fp, "%*d,", 0, (int) dt );
+
+        //
+        dt = t_null;
+        for(int i = 0; i < nb_sample; i++){
+            vect = creeretremplir(n);
+            tri_rapide_vect(&vect);
+            t0 = clock();
+            tri_tas_vect(&vect);
+            t1 = clock();
+            dt += t1 - t0;
+        }
+        dt = dt/nb_sample;
+        fprintf(fp, "%*d,", 0, (int) dt );
+
+        //
+        dt = t_null;
+        for(int i = 0; i < nb_sample; i++){
+            vect = creeretremplir(n);
+            tri_rapide_vect(&vect);
+            t0 = clock();
+            tri_rapide_vect(&vect);
+            t1 = clock();
+            dt += t1 - t0;
+        }
+        dt = dt/nb_sample;
+        fprintf(fp, "%*d,", 0, (int) dt );
+
+
+
+        //
+        fprintf(fp, "\n");
+
+
+    }
+    printf("done\n");
+    fclose(fp);
+    return;
+
+
+}
+//////////////////////////////////////////////////////////////////////////
+
 int main(int argc, char const *argv[]) {
 
     // test_func();
@@ -400,7 +534,21 @@ int main(int argc, char const *argv[]) {
     // tri_rapide_vect(&vect);
     // printVect(vect);
     // printf("done\n" );
-    dubious_vect_benchmark(argc, argv);
+    if(argc < 2){
+        printf("ERROR - FICHIER MANQUANT\n");
+        return 0 ;
+    }
+    if(argc >= 2){
+        dubious_random_vect_benchmark(argv[1]);
+    }
+    if(argc >= 3){
+        dubious_sorted_vect_benchmark(argv[2]);
+    }
+
+
+
+
+
 
 
 

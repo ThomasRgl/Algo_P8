@@ -53,3 +53,7 @@ dkms.conf
 
 .gdb*
 *.csv
+
+*.png
+*.txt
+*.o
