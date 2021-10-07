@@ -105,6 +105,8 @@ void printVect(vec_t vect){
 ///////////////////////////////////////////////////////////////////////////
 
 void tri_bull_vect(vec_t * vect){
+    if(vect->nbele > 10000){return;}
+
     float tmp = 0;
     for( size_t i = vect->nbele - 1; i >= 1; i-- ){
         for( size_t j = 0; j < i; j++ ){
@@ -117,7 +119,11 @@ void tri_bull_vect(vec_t * vect){
     }
 }
 
+///////////////////////////////////////////////////////////////////////////
+
 void tri_selection_vect(vec_t * vect){
+    if(vect->nbele > 30000){return;}
+
     int n = vect->nbele;
     size_t min = 0;
     float tmp = 0;
@@ -135,7 +141,11 @@ void tri_selection_vect(vec_t * vect){
     }
 }
 
+///////////////////////////////////////////////////////////////////////////
+
 void tri_insertion_vect(vec_t * vect){
+    if(vect->nbele > 20000){return;}
+
     int n = vect->nbele;
     size_t index = 0;
     float tmp = 0;
@@ -151,27 +161,9 @@ void tri_insertion_vect(vec_t * vect){
     }
 }
 
-float * split_vect(size_t debut, size_t fin, float * vect, float * tmp );
-float * fusion_vect(size_t debut, size_t milieu, size_t fin, float * vect, float * tmp );
-
-void tri_fusion_vect(vec_t * vect){
-    float * vectP = vect->v;
-    float * tmp = malloc(vect->nbele * sizeof(float));
-    memcpy(tmp, vectP, vect->nbele * sizeof(float) );
-    vect->v = split_vect(0, vect->nbele - 1, vectP, tmp );
-}
-
-float * split_vect(size_t debut, size_t fin, float * vect, float * tmp ){
-    if(fin - debut < 1)
-        return vect;
-    size_t milieu = debut + ((fin - debut) >> 1);
-    // printf("split with %ld %ld \n",debut, milieu );
-    vect = split_vect(debut, milieu, vect, tmp );
-    // printf("split with %ld %ld \n",milieu + 1 , fin );
-    vect = split_vect( milieu + 1 , fin, vect, tmp );
-    // printf("glue with %ld %ld %ld \n",debut ,milieu, fin );
-    return fusion_vect( debut, milieu, fin, vect, tmp);
-}
+///////////////////////////////////////////////////////////////////////////
+// float * split_vect(size_t debut, size_t fin, float * vect, float * tmp );
+// float * fusion_vect(size_t debut, size_t milieu, size_t fin, float * vect, float * tmp );
 
 float * fusion_vect(size_t debut, size_t milieu, size_t fin, float * vect, float * tmp ){
     size_t indexA = debut;
@@ -188,64 +180,228 @@ float * fusion_vect(size_t debut, size_t milieu, size_t fin, float * vect, float
             indexB++;
             tmpIndex++;
         }
-        // printf("%f - ", tmp[tmpIndex - 1] );
     }
-    // printf(" end " );
+
     while( indexB != fin + 1 ){ //On colle de indexB à milieu
-        // printf(" colleB " );
         tmp[tmpIndex] = vect[indexB];
         indexB++;
-        // printf("%f - ", tmp[tmpIndex] );
         tmpIndex++;
     }
     while(indexA != milieu + 1){//On colle de indexA à milieu
-        // printf(" colleA " );
         tmp[tmpIndex] = vect[indexA];
         indexA++;
-        // printf("%f - ", tmp[tmpIndex] );
         tmpIndex++;
     }
     // printf("\n" );
-    memcpy(vect, tmp,  20 * sizeof(float) );
+    memcpy(vect + debut, tmp + debut,  ((fin - debut) + 1)  * sizeof(float) );
     return vect;
 }
 
+float * split_vect(size_t debut, size_t fin, float * vect, float * tmp ){
+    if(fin - debut < 1)
+        return vect;
+    size_t milieu = debut + ((fin - debut) >> 1);
+    vect = split_vect(debut, milieu, vect, tmp );
+    vect = split_vect( milieu + 1 , fin, vect, tmp );
+    return fusion_vect( debut, milieu, fin, vect, tmp);
+}
 
-// fonction fusionner(p, P, q, Q)
-//     pour i allant de 0 à taille(p)-1 faire
-//         si valeur(p.suivant) > valeur(q.suivant)
-//             déplacer le maillon q.suivant après le maillon p
-//             si Q = 1 quitter la boucle
-//             Q := Q-1
-//         sinon
-//             si P = 1
-//                 tant que Q >= 1
-//                     q := q.suivant
-//                     Q := Q-1
-//                 fin
-//                 quitter la boucle
-//             fin
-//             P := P-1
-//         fin
-//         p := p.suivant
-//     fin
-//     renvoyer q
-// fin
-//
+void tri_fusion_vect(vec_t * vect){
+    float * vectP = vect->v;
+    float * tmp = malloc(vect->nbele * sizeof(float));
+    memcpy(tmp, vectP, vect->nbele * sizeof(float) );
+    vect->v = split_vect(0, vect->nbele - 1, vectP, tmp );
+}
 
-void tri_tas_vect(){}
-
-void tri_rapide_vect(){}
+///////////////////////////////////////////////////////////////////////////
 
 
+void tamiser(float * vect, size_t noeud, size_t n) {
+    size_t k = noeud;
+    size_t j = 2 * k;
+    float tmp;
+    while( j <= n){
+        if(j < n && vect[j] < vect[j+1]){
+            j++;
+        }
+        if( vect[k] < vect[j] ){
+            tmp = vect[k];
+            vect[k] = vect[j];
+            vect[j] = tmp;
+            k = j;
+            j = 2 * k;
+        }
+        else{
+            j = n + 1;
+        }
+    }
+}
 
-int main (){
-    vec_t vect = creeretremplir(20);
-    printVect(vect);
+void triParTas(float * vect, size_t longueur){
+    float tmp;
+    for( int i = longueur >> 1; i >= 0; i--){
+        tamiser(vect, i, longueur);
+    }
+    for( int i = longueur - 1; i >= 1; i--){
+        tmp = vect[i];
+        vect[i] = vect[0];
+        vect[0] = tmp;
+        tamiser(vect, 0, i-1);
+    }
+}
 
-    // tri_bull_vect(&vect);
-    tri_fusion_vect(&vect);
-    printVect(vect);
+void tri_tas_vect( vec_t * vect ){
+    triParTas(vect->v, vect->nbele);
+}
+
+
+///////////////////////////////////////////////////////////////////////////
+
+int  partionner(float * vect, int deb, int fin, int pivot ){
+    float tmp = vect[pivot];
+    vect[pivot] = vect[fin];
+    vect[fin] = tmp;
+
+    int j = deb;
+    for(int i = deb; i <= fin - 1; i++){
+        if( vect[i] <= vect[fin]){
+            tmp = vect[i];
+            vect[i] = vect[j];
+            vect[j] = tmp;
+
+            j++;
+        }
+    }
+
+    tmp = vect[fin];
+    vect[fin] = vect[j];
+    vect[j] = tmp;
+
+    return j;
+
+}
+
+void triRapide( float * vect, int deb, int fin){
+    if(deb < fin){
+        int pivot = deb; // choix pivot
+        pivot = partionner(vect, deb, fin, pivot);
+        triRapide(vect, deb, pivot - 1 );
+        triRapide(vect, pivot + 1 , fin );
+    }
+}
+
+void tri_rapide_vect( vec_t * vect ){
+    triRapide(vect->v, 0, vect->nbele - 1);
+}
+
+
+//////////////////////////////////////////////////////////////////////////
+
+
+void dubious_vect_benchmark( int argc, char const *argv[] ){
+
+    if(argc > 1){
+        printf("%d\n", argc );
+        printf("%s\n",argv[1] );
+    }
+    else{
+        printf("ERROR - FICHIER MANQUANT\n");
+        return;
+    }
+    clock_t t0, t1, dt, t_null;
+    vec_t vect;
+    t0 = clock();
+    t_null = t0 - t0;
+    int nb_sample = 10;
+
+    for(unsigned long long n = 10; n < 1000000 /*10^6*/; n *= 2){
+        printf("%*lld:\t", 10,  n );
+
+
+        //
+        dt = t_null;
+        for(int i = 0; i < nb_sample; i++){
+            vect = creeretremplir(n);
+            t0 = clock();
+            tri_bull_vect(&vect);
+            t1 = clock();
+            dt += t1 - t0;
+        }
+        dt = dt/nb_sample;
+        printf("%*d,", 10,(int) dt );
+
+        //
+        dt = t_null;
+        for(int i = 0; i < nb_sample; i++){
+            vect = creeretremplir(n);
+            t0 = clock();
+            tri_insertion_vect(&vect);
+            t1 = clock();
+            dt += t1 - t0;
+        }
+        dt = dt/nb_sample;
+        printf("%*d,", 10,(int) dt );
+
+        //
+        dt = t_null;
+        for(int i = 0; i < nb_sample; i++){
+            vect = creeretremplir(n);
+            t0 = clock();
+            tri_selection_vect(&vect);
+            t1 = clock();
+            dt += t1 - t0;
+        }
+        dt = dt/nb_sample;
+        printf("%*d,", 10,(int) dt );
+
+        //
+        dt = t_null;
+        for(int i = 0; i < nb_sample; i++){
+            vect = creeretremplir(n);
+            t0 = clock();
+            tri_tas_vect(&vect);
+            t1 = clock();
+            dt += t1 - t0;
+        }
+        dt = dt/nb_sample;
+        printf("%*d,", 10,(int) dt );
+
+        //
+        dt = t_null;
+        for(int i = 0; i < nb_sample; i++){
+            vect = creeretremplir(n);
+            t0 = clock();
+            tri_rapide_vect(&vect);
+            t1 = clock();
+            dt += t1 - t0;
+        }
+        dt = dt/nb_sample;
+        printf("%*d,", 10,(int) dt );
+
+
+
+        //
+        printf("\n");
+
+
+    }
+
+
+}
+//////////////////////////////////////////////////////////////////////////
+int main(int argc, char const *argv[]) {
+
+    // test_func();
+
+    // vec_t vect = creeretremplir(20);
+    // printVect(vect);
+    //
+    // // tri_bull_vect(&vect);
+    // tri_rapide_vect(&vect);
+    // printVect(vect);
+    // printf("done\n" );
+    dubious_vect_benchmark(argc, argv);
+
 
 
 
