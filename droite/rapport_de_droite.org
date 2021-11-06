@@ -1,0 +1,476 @@
+#+TITLE: Tris de vecteurs
+#+AUTHOR: Thomas ROGLIN
+#+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-readtheorg.setup
+#+HTML_HEAD: <style>pre.src {background-color: #1c2841; color: #e5e5e5;}</style>
+
+
+
+* Algos de droites
+
+
+** Fonction de base
+
+*** complexité temps
+
+Pour chaque x on calcule la valeur de y=f(x), la complexité est de O(N) au minimum car le calcul que chaque y nécessite des opérations complexes (division) 
+
+*** code
+#+BEGIN_SRC c
+
+void droite (int x0, int y0, int x1, int y1) {
+  int x, y;
+  float yf;
+
+  for (x = x0; x <= x1; x++) {
+     yf = (float) (x - x0) * (y1 - y0);
+     yf /= (x1 - x0);
+     yf += y0;
+     y = (int) (yf + 0.5); /* approximation à l’entier le plus proche*/
+     affiche(x,y);
+  }
+}
+
+#+END_SRC
+
+** Algorithme de Bresenham
+
+*** complexité temps
+Pour chaque x on calcule la valeur de y=f(x), la complexité est de O(N), chaque calcul de Y nécessite une opération simple
+
+
+*** code
+#+BEGIN_SRC c
+void droite_br (long u, long v, long * tab) {
+/* u est dx, v est dy */
+   long x, y, delta, incD, incH;
+
+   incH   = v << 1;
+   delta  = incH - u;
+   incD   = delta - u;
+   for (x = 0, y = 0; x < u; x++) {
+      // affiche(x, y);
+      tab[x] = y;
+      if (delta > 0) {
+         y++;
+         delta += incD;
+      }
+      else {
+         delta += incH;
+      }
+   }
+}
+#+END_SRC
+
+** Rokne, Wyvill et Wu (CG&A 1993) via le pas de deux
+
+*** complexité temps
+Cette fois on avance de 2 en 2, On a donc une complexité O(N/2)
+
+*** code
+#+BEGIN_SRC c
+void droite_2p (long u, long v, long * tab) {
+/* u est dx, v est dy */
+    long x, y, delta, incD, incH;
+
+    incH   = v << 1;
+    delta  = incH - u;
+    incD   = delta - u;
+    x =0;
+    y =0;
+
+    while (x < u ) {
+        if(delta > 0){
+            if (delta - incH > 0 ){
+                y++;
+                tab[x] = y;
+                x++;
+                tab[x] = y;
+                x++;
+            }
+            else{
+                tab[x] = y;
+                x++;
+                y++;
+                tab[x] = y;
+                x++;
+            }
+            delta += incH + incD;
+        }
+        else{
+            tab[x] = y;
+            x++;
+            tab[x] = y;
+            x++;
+            delta += incH * 2;
+        }
+        
+   }
+
+   if( (u-1)%2 && x < u){
+        tab[x] = y;
+   }
+}
+#+END_SRC
+
+
+** Graham et Iyengar (CG&A 1994) via le pas de trois
+
+*** complexité temps
+on avance de 3 en 3, mais seulement dans le cas optimal, 
+dans la majorité des cas on avance de 2 en 2 et parfois de 3 en 3. On a donc un algo en theorie légerement meilleur que le précedent
+
+*** code
+#+BEGIN_SRC c
+
+
+void droite_3p( long dx, long dy, long * tab){
+    long incr1, incr2, incr3, D, x, y, xend, c;
+
+    x = 0;
+    y = 0; 
+
+    xend = dx - 1;
+    tab[x] = y;
+    incr2 = 4 * dy - 2 * dx;
+    if( incr2 <= 0 ){ //slope <= 1/2
+        c = 2 * dy;
+        incr1 = 2 * c;
+        incr3 = incr2 + c;
+        D = incr1 - dx;
+        while (x < xend){
+            if( D <= 0) {
+                // pattern 1
+                x++;
+                tab[x] = y;
+                x++;
+                tab[x] = y;
+                D += incr1;
+            }
+            else if (D >= c ) {
+                // pattern 3
+                x++;
+                y++;
+                tab[x] = y;
+                x++;
+                tab[x] = y;
+                D +=  incr2;
+            }
+            else { 
+                // pattern 5
+                x++;
+                tab[x] = y;
+                x++;
+                y++;
+                tab[x] = y;
+                x++;
+                tab[x] = y;
+                D +=  incr3;
+            }
+        }
+    }
+    else { //slope >= 1/2 -> non traité ici
+    }
+
+    if(x < dx ) {
+        tab[x] = y;
+    }
+}
+
+#+END_SRC
+
+
+** Angel et Morrison (CG&A 1991) via le pgcd
+
+*** complexité temps
+Le temps d'execution de cet algorithme est le meme que l'algo à 3 pas divisé par le pgcd. Donc on a un réel avantage quand le pgcd est plus grand que 2, mais quand le pgcd est de 1, on obtient le meme temps que la fonction à 3 pas (voir plus long)
+*** code
+#+BEGIN_SRC c
+
+static long gcd (long a, long b) {
+    long r, i;
+    while(b!=0){
+        r = a % b;
+        a = b;
+        b = r;
+    }
+    return a;
+}
+
+
+#+END_SRC
+
+#+BEGIN_SRC c
+
+
+void droite_pgcd( long dx, long dy, long * tab){
+    long g = gcd(dx,dy);
+    long min_dx = dx/g;
+    long min_dy = dy/g;
+    size_t size = min_dx * sizeof(long);
+    
+    droite_3p( min_dx, min_dy, tab);
+    
+    for( long i = 1; i < g; i++){
+        memcpy(tab+(i*min_dx), tab, min_dx * sizeof(long) );
+    }
+
+}
+
+#+END_SRC
+
+
+
+** Fast Lines: a Span by Span Method
+
+*** complexité temps
+*** code
+#+BEGIN_SRC c
+
+void line(long u, long v, long longue, long shirt, long * slope){
+    long incH= v * 2;
+    long incD= incH- u;
+    long delta= incD+ v;
+    slope[0] = longue;
+    slope[u - 1] = shirt;
+    long x = 1;
+    long cpt = (u - 2) / 4;
+    
+
+    for ( ; cpt > 0; cpt--) {  /* (1) */
+        if (delta < 0) { /* caseA */
+            slope[x] = longue;
+            slope[u - ++x]= longue;
+            slope[x] = longue;
+            slope[u - ++x]= longue;
+            delta+= incH;
+        }
+        else{
+            if (delta< v) { /* caseB */
+                slope[x] = longue;
+                slope[u - ++x] = longue;
+                slope[x] = shirt;
+                slope[u - ++x]= shirt;
+            }
+            else{ /* caseC */
+                slope[x] = shirt;
+                slope[u - ++x] = shirt;
+                slope[x] = longue;
+                slope[u - ++x]= longue;
+            }
+            delta+= incD;
+        }
+    }
+}
+
+
+#+END_SRC
+
+#+BEGIN_SRC c
+
+void line2(long u, long v, long longue, long shirt, long * slope){
+    long incH= v * 2;
+    long incD= incH - u;
+    long delta= incD + v;
+    // slope[0] = longue;
+    // slope[u - 1] = shirt;
+    long x = 1;
+    long cpt = (u - 2) / 4;
+
+    for ( ; cpt >= 0; cpt--) {  /* (1) */
+        if (delta < 0) { /* caseA */
+            slope[x] = shirt;
+            ++x;
+                    
+            slope[u - x]= shirt;
+            slope[x] = shirt;
+            ++x;
+                    
+            slope[u - x]= shirt;
+
+            
+            delta+= incH;
+        }
+        else{
+            if (delta< v) { /* caseB */
+                      slope[x] = shirt;
+                slope[u - ++x] = shirt;
+                     slope[x] = longue;
+                slope[u - ++x]= longue;
+            }
+            else{ /* caseC */
+                      slope[x] = longue;
+                slope[u - ++x] = longue;
+                       slope[x] = shirt;
+                  slope[u - ++x]= shirt;
+            }
+            delta+= incD;
+        }
+    }
+    
+}
+
+
+#+END_SRC
+
+#+BEGIN_SRC c
+
+void droite_pas_auto( long dx, long dy, long * tab){
+    long g = gcd(dx,dy);
+    long u = dx/g;
+    // printf("g : %ld u : %ld ", g, u);
+    long v = dy/g;
+    long longue = u/v + 1;
+    long shirt = longue - 1;
+    long nb_l = u % v;
+    // printf("longue : %ld \n", longue);
+    // printf("shirt %ld \n", shirt);
+
+    if (v > 2*nb_l)
+        line2(v, nb_l, longue, shirt, tab);
+    else
+        line(v, v-nb_l, longue, shirt, tab);
+    
+    for( long i = 1; i < g; i++){
+        // printf("i*v : %ld\n", i*v);
+        memcpy(tab+(i*v), tab, v * sizeof(long) );
+    }
+
+}
+
+#+END_SRC
+
+
+
+* Fonction de benchmark
+
+#+BEGIN_SRC c
+void droite_benchmark(char const *fileName ){
+
+    FILE *fp;
+    fp = fopen(fileName, "w");
+
+
+    clock_t t0, t1, dt, t_null;
+    t0 = clock();
+    t_null = t0 - t0;
+    long size_tour_max = 10000;
+    
+
+    srand(time(NULL));
+
+    printf("x, Bresenham, pas de deux, pas de trois, pgcd, Span by Span Method\n");
+    fprintf(fp,"x,Bresenham, pas de deux, pas de trois, pgcd, Span by Span Method\n");
+
+    for(long dx = 10; dx <= 10000 ; dx*=10){
+        long * tab;
+        tab = (long *) malloc( (dx * 2) * sizeof(long ) );
+        
+        long inc = 1;
+        long size_sample = dx >> 1;;
+        long tour = (size_tour_max / dx);
+        long fixTour = 10;
+        
+        printf("dx : %ld,", dx );
+        fprintf(fp,"%ld,", dx );
+
+        dt = t_null;
+        for( long t = 0; t < tour; t ++){          
+            for( long f = 0; f < fixTour; f ++){    
+                for( long dy = 1; dy <= size_sample; dy ++){
+                    t0 = clock();
+                    droite_br(dx, dy, tab);
+                    t1 = clock();
+                    dt += t1 - t0;
+                    forceUse(tab, dx);
+                }
+            }
+        }
+        dt = (dt/ size_sample) / tour  ;
+        printf( "%*ld,", 10, (long ) dt );
+        fprintf(fp,"%*ld,", 0, (long ) dt );
+
+        dt = t_null;
+        for( long t = 0; t < tour; t ++){          
+            for( long f = 0; f < fixTour; f ++){    
+                for( long dy = 1; dy <= size_sample; dy ++){
+                    t0 = clock();
+                    droite_2p(dx, dy, tab);
+                    t1 = clock();
+                    dt += t1 - t0;
+                    forceUse(tab, dx);
+                }
+            }
+        }
+        dt = (dt/ size_sample) / tour  ;
+        printf( "%*ld,", 10, (long ) dt );
+        fprintf(fp,"%*ld,", 0, (long ) dt );
+
+
+        dt = t_null;
+        for( long t = 0; t < tour; t ++){          
+            for( long f = 0; f < fixTour; f ++){    
+                for( long dy = 1; dy <= size_sample; dy ++){
+                    t0 = clock();
+                    droite_3p(dx, dy, tab);
+                    t1 = clock();
+                    dt += t1 - t0;
+                    forceUse(tab, dx);
+                }
+            }
+        }
+        dt = (dt/ size_sample) / tour  ;
+        printf( "%*ld,", 10, (long ) dt );
+        fprintf(fp,"%*ld,", 0, (long ) dt );
+
+
+        dt = t_null;
+        for( long t = 0; t < tour; t ++){          
+            for( long f = 0; f < fixTour; f ++){    
+                for( long dy = 1; dy <= size_sample; dy ++){
+                    t0 = clock();
+                    droite_pgcd(dx, dy, tab);
+                    t1 = clock();
+                    dt += t1 - t0;
+                    forceUse(tab, dx);
+                }
+            }
+        }
+        dt = (dt/ size_sample) / tour  ;
+        printf( "%*ld,", 10, (long ) dt );
+        fprintf(fp,"%*ld,", 0, (long ) dt );
+
+
+        dt = t_null;
+        for( long t = 0; t < tour; t ++){          
+            for( long f = 0; f < fixTour; f ++){    
+                for( long dy = 1; dy <= size_sample; dy ++){
+                    t0 = clock();
+                    droite_pas_auto(dx, dy, tab);
+                    t1 = clock();
+                    dt += t1 - t0;
+                    forceUse(tab, dx);
+                }
+            }
+        }
+        dt = (dt/ size_sample) / tour  ;
+        printf( "%*ld,", 10, (long ) dt );
+        fprintf(fp,"%*ld,", 0, (long ) dt );
+
+
+        printf("\n" );
+        fprintf(fp,"\n" );
+    }
+}
+#+END_SRC
+
+* Mesure de perf
+
+
+
+** sans flag d'optimisation
+
+[[./img/trace1.png]]
+
+** avec flag d'optimisation
+
+[[./img/trace1_03_marchNative.png]]

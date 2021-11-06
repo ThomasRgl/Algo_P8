@@ -1,0 +1,191 @@
+#+TITLE: Tris de vecteurs
+#+AUTHOR: Thomas ROGLIN
+#+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-readtheorg.setup
+#+HTML_HEAD: <style>pre.src {background-color: #1c2841; color: #e5e5e5;}</style>
+
+
+
+* Images
+* Compression sans perte
+
+c'est de la merde
+
+
+** Shammon-Fane
+pas terrible
+Texte
+trier par ordre dec les caractere en fonction de leur taux d'apparition
+On sépare en 2 ensemble ayant le meme pourcentage
+puis on refait
+
+#+BEGIN_SRC
+
+ 0      1
+E  M | A | L  N
+25 23  20  17 15
+0   1  0     1
+            0  1
+
+E 00
+M 01
+A 10
+L 110
+N 111
+
+#+END_SRC
+
+
+** Huffman
+pas terrible
+pour texte
+
+#+BEGIN_SRC
+
+
+E  M | A | L  F
+25 23  20|  17 15
+
+E 00
+M 01
+A 10
+L 110
+N 111
+
+#+END_SRC
+
+** LZW
+pas terrible
+Sans fourir le dictionnaire
+-> le sous entendre
+256 (ascii) + le reste
+
+
+#+BEGIN_SRC
+func LZW_cmp{
+    D: dictionnaire
+    T: chaine
+    T<- lire 1 caractere
+    initialiser D
+    while(!  EOF){
+        car <- lire 1 caractere
+        si(T + car in D)
+            T <- T + car
+        else{
+            ecrire le code de T
+            Ajouter T+car dans D
+            T <- car
+        }
+    }
+    ecrire le code de T
+}
+#+END_SRC
+
+#+BEGIN_SRC
+func LZW_decmp{
+    initialiser D
+    ancien <- lire code
+    ecrire trad(ancien)
+    while(!EOF){
+        nouveau <- lire code
+        if( ! nouveau in D) {
+            T <- trad(ancien) + premiercaratere(trad(ancien))
+        }
+        else{
+            T<-trad(nouveau)
+        }
+        ajouter trad(ancien) + premiercaratere(T) à D
+    }
+    ancien <- nouveau
+    ecrire T
+}
+
+#+END_SRC
+
+
+
+** RLE
+pas terrible
+
+#+BEGIN_SRC
+
+TWEET_TWEET_TTT
+T1W1E2T1_1T1W1E2T1_1T3
+-> pas ouf
+
+#+END_SRC
+
+pour les images
+
+#+BEGIN_SRC
+
+SGI
+Image (r1,g1,b1) (r2,g2,b2)
+        r1,r2,r3  g1,g2,g3  b1,b2,b3
+#+END_SRC
+
+RLE est bien si il y a bcp de répétition
+
+
+#+BEGIN_SRC
+
+1 octets signé : 0 - 127 rep
+                 -1 - -128 solos
+T-1 W E2 t-3 _ T W E2 T-1_T3
+
+Pire des cas : 1/128 taille
+
+#+END_SRC
+
+
+
+
+
+* compression avec perte
+
+** Comment qualifier la perte ?
+
+garder de préférence la compilabilité de l'image après décompression
+
+** Clustering des couleurs
+
+Image RGB -> Image + CLUT -> image selon CLUT + CLUT -> Afficher RGB
+
+***  BSP Tree Binary Space Partition
+    Espace 3D, on coupe avec un plan, puis pour chaque nouvel espace on recoupe etc , puis on en fait un arbre
+*** KD tree
+
+***
+** La CLUT 
+
+La totale 
+La trier  (sans oublier de metre à jour l'index des pixels, Fusionner les identiques (et ou plus proche ))
+
+
+** Espace Image Malftonning & Mithering 
+
+#+BEGIN_SRC
+
+blanc / noir 
+
+On converti l'image en noir et blanc 
+On subdivise chaque pixel et on fait different patterne en fonction de la couleur 
+
+???
+Floyd Steinberg 1976 
+calcul erreur et reparti l'erreurs sur les autres pixel 
+
+#+END_SRC
+
+
+
+** ??
+
+#+BEGIN_SRC
+
+4 pixel -> moyenne -> 1 pixels
+Taille / 4 
+
+
+9 pixel -> moyenne -> dans 4 pixels, on met 2 avec la moyenne et on met des couleurs très diff dans les 2 autres pixel 
+#+END_SRC
+

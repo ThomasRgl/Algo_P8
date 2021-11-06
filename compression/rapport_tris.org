@@ -1,109 +1,27 @@
-#include <time.h>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
-
-struct cellfloat {
-  float v;
-  struct cellfloat * nxt;
-} ;
-typedef struct cellfloat cellfloat_t;
-typedef struct cellfloat * liste;
-
-liste creer (int nb) {
-  liste tete, crt;
-  int i;
-  float x, y, z;
-  if (nb < 2)
-	nb = 10;
-  tete = NULL;
-  x = 1.0;
-  y = 0.13;
-  z = 0.021;
-  for (i = 0; i < nb; i++) {
-    crt = malloc (sizeof (cellfloat_t));
-    assert (crt);
-    crt->v   = x;
-    crt->nxt = tete;
-    tete     = crt;
-    x += y;
-    y += z;
-    if (x > 1.5) {
-      x -= 1.01;
-    }
-    if (x < 0.5) {
-      x += 0.499;
-    }
-    if (y > 1.) {
-      y = y - 1.01;
-    }
-    if (x < 0.5) {
-      y += 0.5001;
-    }
-  }
-  return tete;
-}
-
-void printCells(cellfloat_t * head){
-    cellfloat_t * body = head;
-    while( body ){
-        printf("%f ", body->v);
-        body = body->nxt;
-    }
-    printf("\n" );
-}
-
-struct vecfloat {
-  int nbele;
-  float * v;
-} ;
-typedef struct vecfloat vec_t;
-
-vec_t creeretremplir (int nb) {
-  vec_t w;
-  int i;
-  float x, y, z, *pt;
-  if (nb < 2)
-	nb = 10;
-  w.nbele = nb;
-  w.v = (float *) malloc (nb * sizeof(float));
-  assert(w.v);
-  x = 1.0;
-  y = 0.13;
-  z = 0.021;
-  pt = w.v;
-  for (i = 0; i < nb; i++) {
-	*pt++ = x;
-	x += y;
-	y += z;
-	if (x > 1.5) {
-	  x -= 1.01;
-	}
-	if (x < 0.5) {
-	  x += 0.499;
-	}
-	if (y > 1.) {
-	  y = y - 1.01;
-	}
-	if (x < 0.5) {
-	  y += 0.5001;
-	}
-  }
-  return w;
-}
-
-void printVect(vec_t vect){
-    for( int i = 0; i < vect.nbele; i++)
-        printf("%f ", vect.v[i]);
-
-    printf("\n" );
-}
+#+TITLE: Tris de vecteurs
+#+AUTHOR: Thomas ROGLIN
+#+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-readtheorg.setup
+#+HTML_HEAD: <style>pre.src {background-color: #1c2841; color: #e5e5e5;}</style>
 
 
-///////////////////////////////////////////////////////////////////////////
 
+* Algo de tris
+
+
+** tris à bulle
+
+*** complexité temps
+
+Pour trier le vecteur avec cette méthode, on effectue un premier parcours du dernier au premier element.
+Puis pour chaque élément du parcours précédent, on refait un parcours d'une taille n/2 en moyenne
+On a donc une complexité d'environ O(n*n/2).
+
+*** complexité espace
+Il n'y a pas d'appel récursif et pas d'allocation supplémentaire.
+La complexité en espace est donc donc linéaire O(N).
+
+*** code
+#+BEGIN_SRC c
 void tri_bull_vect(vec_t * vect){
 
 
@@ -118,9 +36,20 @@ void tri_bull_vect(vec_t * vect){
         }
     }
 }
+#+END_SRC
 
-///////////////////////////////////////////////////////////////////////////
+** tris selection
+*** complexité temps
+On parcourt le vecteur du ieme  élément et à chaque passage on sélectionne d'indice du plus petit élément.
+On échange l'élement le plus petit avec le ieme élément puis on incrémente i
+On a donc une complexité quadratique inférieure à O(n^2).
 
+*** complexité espace
+Il n'y a pas d'appel récursif et pas d'allocation supplémentaire.
+La complexité en espace est donc donc linéaire O(N).
+
+*** code
+#+BEGIN_SRC c
 void tri_selection_vect(vec_t * vect){
     int n = vect->nbele;
     size_t min = 0;
@@ -129,7 +58,7 @@ void tri_selection_vect(vec_t * vect){
         min = i;
         for( size_t j = i + 1; j < n; j++){
             if( vect->v[min] > vect->v[j])
-                min = j;
+            min = j;
         }
         if(min != i){
             tmp = vect->v[i];
@@ -138,12 +67,20 @@ void tri_selection_vect(vec_t * vect){
         }
     }
 }
+#+END_SRC
 
-///////////////////////////////////////////////////////////////////////////
+** tris insertion
+*** complexité temps
+On parcourt le vecteur du deuxième au dernier élément, et à chaque incrémentation, on place le nouvel élément à sa place en reparcourant la liste en sens inverse.
+On a donc une complexité quadratique inférieure à O(n^2).
 
+*** complexité espace
+Il n'y a pas d'appel récursif et pas d'allocation supplémentaire.
+La complexité en espace est donc donc linéaire O(N).
+
+*** code
+#+BEGIN_SRC c
 void tri_insertion_vect(vec_t * vect){
-
-
     int n = vect->nbele;
     size_t index = 0;
     float tmp = 0;
@@ -151,18 +88,26 @@ void tri_insertion_vect(vec_t * vect){
         tmp = vect->v[i];
         index = i;
         while( tmp < vect->v[index - 1] && index > 0 ){
-            // printf("aa\n" );
             vect->v[index] = vect->v[index - 1];
             index --;
         }
         vect->v[index] = tmp;
     }
 }
+#+END_SRC
 
-///////////////////////////////////////////////////////////////////////////
-// float * split_vect(size_t debut, size_t fin, float * vect, float * tmp );
-// float * fusion_vect(size_t debut, size_t milieu, size_t fin, float * vect, float * tmp );
 
+** tris fusion
+*** complexité temps
+Pour trier le vecteur on va séparer récursivement le vecteur en 2 parties,
+puis on va refusionner chaque partie en triant les éléments
+ce qui donne une complexité d'environ O(nlog2(n)).
+
+*** complexité espace
+Il y a log2(n) appels récurcif, le vecteur de taille n pour stocker la liste et un espace temporaire de la même taille que le vecteur
+Il y a donc une complexité en espace de O(log2(n) + 2n).
+*** code
+#+BEGIN_SRC c
 float * fusion_vect(size_t debut, size_t milieu, size_t fin, float * vect, float * tmp ){
     size_t indexA = debut;
     size_t indexB = milieu + 1;
@@ -190,11 +135,12 @@ float * fusion_vect(size_t debut, size_t milieu, size_t fin, float * vect, float
         indexA++;
         tmpIndex++;
     }
-    // printf("\n" );
     memcpy(vect + debut, tmp + debut,  ((fin - debut) + 1)  * sizeof(float) );
     return vect;
 }
+#+END_SRC
 
+#+BEGIN_SRC c
 float * split_vect(size_t debut, size_t fin, float * vect, float * tmp ){
     if(fin - debut < 1)
         return vect;
@@ -203,17 +149,24 @@ float * split_vect(size_t debut, size_t fin, float * vect, float * tmp ){
     vect = split_vect( milieu + 1 , fin, vect, tmp );
     return fusion_vect( debut, milieu, fin, vect, tmp);
 }
+#+END_SRC
 
+#+BEGIN_SRC c
 void tri_fusion_vect(vec_t * vect){
     float * vectP = vect->v;
     float * tmp = malloc(vect->nbele * sizeof(float));
     memcpy(tmp, vectP, vect->nbele * sizeof(float) );
     vect->v = split_vect(0, vect->nbele - 1, vectP, tmp );
 }
+#+END_SRC
 
-///////////////////////////////////////////////////////////////////////////
-
-
+** tris par tas
+*** complexité temps
+ /
+*** complexité espace
+ /
+*** code
+#+BEGIN_SRC c
 void tamiser(float * vect, size_t noeud, size_t n) {
     size_t k = noeud;
     size_t j = 2 * k;
@@ -234,7 +187,9 @@ void tamiser(float * vect, size_t noeud, size_t n) {
         }
     }
 }
+#+END_SRC
 
+#+BEGIN_SRC c
 void triParTas(float * vect, size_t longueur){
     float tmp;
     for( int i = longueur >> 1; i >= 0; i--){
@@ -247,14 +202,28 @@ void triParTas(float * vect, size_t longueur){
         tamiser(vect, 0, i-1);
     }
 }
+#+END_SRC
 
+#+BEGIN_SRC c
 void tri_tas_vect( vec_t * vect ){
     triParTas(vect->v, vect->nbele);
 }
+#+END_SRC
 
 
-///////////////////////////////////////////////////////////////////////////
+** tris rapide
+*** complexité temps
+On va choisir un pivot et mettre à gauche du pivot les éléments plus petits et à droite les éléments plus grands
+puis on va refaire récursivement cette opération sur les éléments à droite et à gauche du pivot
+On a donc une complexité de O(n) pour trier les éléments à droite et à gauche du pivot
+puis il y aura O(log2n) séparations récurcive dans le meilleur des cas, et O(n) dans le pire des cas
+On a donc une complexité en temps de O(nlog2(n)) dans le meilleur des cas et O(n^2) dans le pire.
+*** complexité espace
+On a entre n et log2(n) appels récursifs et un vecteur de taille n,
+on a donc une complexité en espace de O(n).
 
+*** code
+#+BEGIN_SRC c
 int  partionner(float * vect, int deb, int fin, int pivot ){
     float tmp = vect[pivot];
     vect[pivot] = vect[fin];
@@ -278,7 +247,9 @@ int  partionner(float * vect, int deb, int fin, int pivot ){
     return j;
 
 }
+#+END_SRC
 
+#+BEGIN_SRC c
 void triRapide( float * vect, int deb, int fin){
     if(deb < fin){
         int pivot = deb; // choix pivot
@@ -287,15 +258,18 @@ void triRapide( float * vect, int deb, int fin){
         triRapide(vect, pivot + 1 , fin );
     }
 }
+#+END_SRC
 
+
+#+BEGIN_SRC c
 void tri_rapide_vect( vec_t * vect ){
     triRapide(vect->v, 0, vect->nbele - 1);
 }
+#+END_SRC
 
+* Fonction de benchmark
 
-//////////////////////////////////////////////////////////////////////////
-
-
+#+BEGIN_SRC c
 void dubious_random_vect_benchmark(char const *fileName ){
 
 
@@ -323,7 +297,6 @@ void dubious_random_vect_benchmark(char const *fileName ){
             tri_bull_vect(&vect);
             t1 = clock();
             dt += t1 - t0;
-            free(vect.v);
         }
         dt = dt/nb_sample;
         fprintf(fp, "%*d,", 0, (int) dt );
@@ -337,7 +310,6 @@ void dubious_random_vect_benchmark(char const *fileName ){
             tri_insertion_vect(&vect);
             t1 = clock();
             dt += t1 - t0;
-            free(vect.v);
         }
         dt = dt/nb_sample;
         fprintf(fp, "%*d,", 0, (int) dt );
@@ -351,7 +323,6 @@ void dubious_random_vect_benchmark(char const *fileName ){
             tri_selection_vect(&vect);
             t1 = clock();
             dt += t1 - t0;
-            free(vect.v);
         }
         dt = dt/nb_sample;
         fprintf(fp, "%*d,", 0, (int) dt );
@@ -364,7 +335,6 @@ void dubious_random_vect_benchmark(char const *fileName ){
             tri_fusion_vect(&vect);
             t1 = clock();
             dt += t1 - t0;
-            free(vect.v);
         }
         dt = dt/nb_sample;
         fprintf(fp, "%*d,", 0, (int) dt );
@@ -377,7 +347,6 @@ void dubious_random_vect_benchmark(char const *fileName ){
             tri_tas_vect(&vect);
             t1 = clock();
             dt += t1 - t0;
-            free(vect.v);
         }
         dt = dt/nb_sample;
         fprintf(fp, "%*d,", 0, (int) dt );
@@ -390,7 +359,6 @@ void dubious_random_vect_benchmark(char const *fileName ){
             tri_rapide_vect(&vect);
             t1 = clock();
             dt += t1 - t0;
-            free(vect.v);
         }
         dt = dt/nb_sample;
         fprintf(fp, "%*d,", 0, (int) dt );
@@ -408,52 +376,23 @@ void dubious_random_vect_benchmark(char const *fileName ){
 
 
 }
-//////////////////////////////////////////////////////////////////////////
+#+END_SRC
 
+* Mesure de perf
 
-//////////////////////////////////////////////////////////////////////////
+On remarque sur le graphique que la courbe du tri fusion, tri par tas et tri rapide semble parallele à la courbe nlog2(n)
+Cette observation concorde avec l'analyse du code, ces 3 tris ont donc une complexité O(nlog2(n))
+Aussi on remarque que le tri à bulle, tri insertion et tri selection semblent avoir une courbe parallele à la courbe n^2
+Ils ont donc une complexité quadratique O(n^2)
 
-int main(int argc, char const *argv[]) {
+** sans flag d'optimisation
 
-    // test_func();
+[[./img/trace1.png]]
+[[./img/trace2.png]]
+[[./img/trace3.png]]
 
-    vec_t vect = creeretremplir(20);
-    printVect(vect);
+** avec flag d'optimisation
 
-    //décommenter les tris pour tester
-
-    // tri_bull_vect(&vect);
-    // tri_insertion_vect(&vect);
-    // tri_selection_vect(&vect);
-    // tri_tas_vect(&vect);
-    // tri_fusion_vect(&vect);
-    tri_rapide_vect(&vect);
-    printVect(vect);
-
-    // passer un fichier en parametre pour lancer le benchmark sur les tris
-    if(argc < 2){
-        printf("ERROR - FICHIER MANQUANT\n");
-        return 0 ;
-    }
-    if(argc >= 2){
-        //
-        dubious_random_vect_benchmark(argv[1]);
-    }
-
-
-
-
-
-
-
-
-
-
-    // cellfloat_t * head = creer(20);
-    // printCells(head);
-
-
-
-
-    return 0;
-}
+[[./img/trace1_03_marchNative.png]]
+[[./img/trace2_03_marchNative.png]]
+[[./img/trace3_03_marchNative.png]]
